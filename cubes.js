@@ -15,24 +15,12 @@ Space = (function() {
     this.container.appendChild(this.renderer.domElement);
     this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
     this.camera.position.set(0, 0, 10);
-    this.light = new THREE.DirectionalLight(0xffffff, 1.5);
-    this.light.position.set(0, 0, 1);
-    this.scene.add(this.light);
-    this.light2 = new THREE.DirectionalLight(0xFFFF99, 1.5);
-    this.light2.position.set(0, 0, -1);
-    this.scene.add(this.light2);
-    this.light3 = new THREE.DirectionalLight(0xFF66CC, 1.5);
-    this.light3.position.set(1, 0, 0);
-    this.scene.add(this.light3);
-    this.light4 = new THREE.DirectionalLight(0x00FF33, 1.5);
-    this.light4.position.set(-1, 0, 0);
-    this.scene.add(this.light4);
-    this.light5 = new THREE.DirectionalLight(0x0033FF, 1.5);
-    this.light5.position.set(0, 1, 0);
-    this.scene.add(this.light5);
-    this.light6 = new THREE.DirectionalLight(0xFF3300, 1.5);
-    this.light6.position.set(0, -1, 0);
-    this.scene.add(this.light6);
+    this.addLight(0, 0, 1, 0xffffff, 1.5);
+    this.addLight(0, 0, -1, 0xFFFF99, 1.5);
+    this.addLight(1, 0, 0, 0xFF66CC, 1.5);
+    this.addLight(-1, 0, 0, 0x00FF33, 1.5);
+    this.addLight(0, 1, 0, 0x0033FF, 1.5);
+    this.addLight(0, -1, 0, 0xFF3300, 1.5);
     window.addEventListener('resize', function() {
       return _this.onWindowResize();
     });
@@ -41,6 +29,13 @@ Space = (function() {
     });
     this.start_stats();
   }
+
+  Space.prototype.addLight = function(x, y, z, color, intensity) {
+    var light;
+    light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(x, y, z);
+    return this.scene.add(light);
+  };
 
   Space.prototype.isFullscreen = function() {
     return document.webkitIsFullScreen || document.mozFullScreen;

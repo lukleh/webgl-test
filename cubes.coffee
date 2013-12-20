@@ -14,28 +14,22 @@ class Space
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
         @camera.position.set  0, 0, 10
         
-        @light = new THREE.DirectionalLight( 0xffffff, 1.5)
-        @light.position.set 0, 0, 1
-        @scene.add @light 
-        @light2 = new THREE.DirectionalLight( 0xFFFF99, 1.5)
-        @light2.position.set(0, 0, -1)
-        @scene.add( @light2 )
-        @light3 = new THREE.DirectionalLight( 0xFF66CC, 1.5)
-        @light3.position.set(1, 0, 0)
-        @scene.add( @light3 )
-        @light4 = new THREE.DirectionalLight( 0x00FF33, 1.5)
-        @light4.position.set(-1, 0, 0)
-        @scene.add( @light4 )
-        @light5 = new THREE.DirectionalLight( 0x0033FF, 1.5)
-        @light5.position.set(0, 1, 0)
-        @scene.add( @light5 )
-        @light6 = new THREE.DirectionalLight( 0xFF3300, 1.5)
-        @light6.position.set(0, -1, 0)
-        @scene.add( @light6 )
+        @addLight  0,  0,  1, 0xffffff, 1.5
+        @addLight  0,  0, -1, 0xFFFF99, 1.5
+        @addLight  1,  0,  0, 0xFF66CC, 1.5
+        @addLight -1,  0,  0, 0x00FF33, 1.5
+        @addLight  0,  1,  0, 0x0033FF, 1.5
+        @addLight  0, -1,  0, 0xFF3300, 1.5
         
         window.addEventListener 'resize', => @onWindowResize()
         @container.addEventListener 'click', (evt) => @toggleFullScreen(evt)
         @start_stats()
+
+
+    addLight: (x, y, z, color, intensity) ->
+        light = new THREE.DirectionalLight color, intensity
+        light.position.set x, y, z
+        @scene.add light
 
 
     isFullscreen: ->

@@ -339,3 +339,7 @@ run = function(container) {
   }
   return m.run();
 };
+
+window.onload = function() {
+  return this.run(document.getElementById("container"));
+};

@@ -221,4 +221,7 @@ run = (container) ->
         c = new CubeRot().setPosition(gpos).allowedRotations(rpos)
         m.add c
     m.run() 
+
+
+window.onload = -> @run document.getElementById "container"
         

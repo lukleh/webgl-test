@@ -12,7 +12,6 @@ Space = (function() {
     this.scene = new THREE.Scene;
     this.renderer = new THREE.WebGLRenderer;
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-    this.renderer.setClearColor(0x0099FF, 1);
     this.container.appendChild(this.renderer.domElement);
     this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
     this.camera.position.set(0, 0, 10);

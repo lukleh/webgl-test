@@ -8,7 +8,7 @@ class Space
         @scene = new THREE.Scene
         @renderer = new THREE.WebGLRenderer
         @renderer.setSize(@container.offsetWidth, @container.offsetHeight)
-        @renderer.setClearColor 0x0099FF, 1
+        #@renderer.setClearColor 0x0099FF, 1
         @container.appendChild( @renderer.domElement )
         
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
@@ -41,6 +41,7 @@ class Space
     isFullscreen: ->
         document.webkitIsFullScreen || document.mozFullScreen
 
+
     toggleFullScreen: (et) ->
         el = et.target
         if not @isFullscreen()
@@ -66,7 +67,6 @@ class Space
         else
             w = @container.offsetWidth
             h = @container.offsetHeight
-        #console.log 'resize', w, h
         @camera.aspect = w / h
         @camera.updateProjectionMatrix()
         @renderer.setSize(w, h)
@@ -114,11 +114,15 @@ class Space
 class Object3D
     attachScene: (scene) ->
         @scene = scene
+
+
     update: (t_step, timestamp) ->
         t_step
 
+
     setObject3D: (m) ->
         @object3D = m
+
 
     setPosition: (pos) ->
         @setPos = pos

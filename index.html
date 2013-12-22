@@ -1,14 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Welcome to WebGL</title>
-    <link rel="stylesheet" href="css/main.css" />
-    <script src="lib/three.min.js"></script>
-    <script src="lib/stats.min.js"></script>
-    <script src="lib/underscore.js"></script>
-    <script src="cubes.js"></script>
+    <title>Demos listing</title>
+    <style>
+    .block {
+      text-align: center;
+      margin: 20px;
+    }
+ 
+    .block:before {
+      content: '';
+      display: inline-block;
+      height: 100%; 
+      vertical-align: middle;
+      margin-right: -0.25em;
+     }
+ 
+    .centered {
+      display: inline-block;
+      vertical-align: middle;
+      width: 400px;
+      padding: 10px 15px;
+      border: #a0a0a0 solid 1px;
+     }
+     .centered a {
+        font-family: Georgia, Times, "Times New Roman", serif;
+        font-size:30px;
+     }
+     a:link {text-decoration:none;}
+    a:visited {text-decoration:none;}
+    a:hover {text-decoration:underline;}
+    a:active {text-decoration:underline;}
+ </style>
 </head>
 <body>
-    <div id="container"></div>
+    
+    <div class="block" style="height: 600px;">
+    
+        <div class="centered">
+            <a href='cubes.html'>Flying cubes</a></br>
+            <a href='camera.html'>Camera test</a></br>
+            <a href='face_shapes.html'>Your face on shapes</a>
+        </div>
+    
+    </div>
 </body>
 </html>

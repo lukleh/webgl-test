@@ -120,10 +120,9 @@ class Object3D
 
     setPosition: (pos) ->
         @setPos = pos
-        [x, y, z] = pos
-        @object3D.position.x = x
-        @object3D.position.y = y
-        @object3D.position.z = z
+        @object3D.position.x = pos[0]
+        @object3D.position.y = pos[1]
+        @object3D.position.z = pos[2]
         @
 
 
@@ -138,32 +137,29 @@ class Cube extends Object3D
 
     makeMaterials: ->
         for i in [0..5]
-            new THREE.MeshLambertMaterial map: THREE.ImageUtils.loadTexture("img/Numbers-#{i}-icon.png")
+            new THREE.MeshPhongMaterial map: THREE.ImageUtils.loadTexture("img/Numbers-#{i}-icon.png")
 
 
     update: (t_step, timestamp) ->
-        step = t_step / 16.7
-        @object3D.rotation.y -= step * 0.01
-        @object3D.rotation.x -= step * 0.01
-        @object3D.rotation.z -= step * 0.01
 
 
 class CubeSpin extends Cube
     allowedRotations: (rot) ->
-        [x, y, z] = rot
-        @rotX = x
-        @rotY = y
-        @rotZ = z
+        [@rotX, @rotY, @rotZ] = rot
+        @rotXspeed = 0.01
+        @rotYspeed = 0.01
+        @rotZspeed = 0.01
         @
 
     update: (t_step, timestamp) ->
         step = t_step / 16.7
         if @rotX
-            @object3D.rotation.y -= step * 0.01
+            @object3D.rotation.x -= step * @rotXspeed
         if @rotY
-            @object3D.rotation.x -= step * 0.01
+            @object3D.rotation.y -= step * @rotYspeed
         if @rotZ
-            @object3D.rotation.z -= step * 0.01
+            @object3D.rotation.z -= step * @rotZspeed
+        super t_step, timestamp
 
 
 class CubeRot extends CubeSpin
@@ -207,8 +203,8 @@ printout = (o) ->
     console.log JSON.stringify o
 
 
-run = (container) ->
-    m = new Space container 
+run_cubes = (container) ->
+    m = new Space container
     grid = makeGrid spacX = 3, spacY = 3, spacZ = 0, countX = 4, countY = 2
     rotations = makeCombinations 3
     for [gpos, rpos] in _.zip grid, rotations
@@ -217,5 +213,8 @@ run = (container) ->
     m.run() 
 
 
-window.onload = -> @run document.getElementById "container"
+window.LL = window.LL || {}
+window.LL.run_cubes = run_cubes
+
+#window.onload = -> run_cubes document.getElementById "container"
         

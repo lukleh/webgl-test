@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>WebGL with camera</title>
+    <link rel="stylesheet" href="css/main.css" />
+    <script src="lib/three.min.js"></script>
+    <script src="lib/stats.min.js"></script>
+    <script src="lib/underscore.js"></script>
+    <script src="js/faces.js"></script>
+    <script src="js/face_shapes.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+    <script type="text/javascript">
+        window.onload = function () {
+            LL.run_face_shapes(document.getElementById("container"))
+        }
+    </script>
+</body>
+</html>

@@ -1,5 +1,3 @@
-webgl cubes
+webgl demos
 ==========
-simple flying cubes
-
-screen goes fullscreen on mouse click
+[listing of demos](http://lukleh.github.io/webgl-test/)

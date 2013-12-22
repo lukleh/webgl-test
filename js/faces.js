@@ -6,7 +6,7 @@
   Face = (function() {
     function Face() {
       this.showCamera = __bind(this.showCamera, this);
-      this.errorCallback = __bind(this.errorCallback, this);
+      this.cameraErrorCallback = __bind(this.cameraErrorCallback, this);
     }
 
     Face.prototype.setVideoElement = function(video) {
@@ -34,7 +34,7 @@
       }
     };
 
-    Face.prototype.errorCallback = function(e) {
+    Face.prototype.cameraErrorCallback = function(e) {
       return console.log('Reeeejected!', e);
     };
 
@@ -43,11 +43,21 @@
       return this.video.onloadedmetadata = function(e) {};
     };
 
+    Face.prototype.startVideo = function(params, callback, errorCallback) {
+      if (navigator.webkitGetUserMedia) {
+        return navigator.webkitGetUserMedia(params, callback, errorCallback);
+      } else if (navigator.mozGetUserMedia) {
+        return navigator.mozGetUserMedia(params, callback, errorCallback);
+      } else if (navigator.getUserMedia) {
+        return navigator.getUserMedia(params, callback, errorCallback);
+      }
+    };
+
     Face.prototype.doFace = function() {
       if (this.hasGetUserMedia()) {
-        navigator.webkitGetUserMedia({
+        this.startVideo({
           video: true
-        }, this.showCamera, this.errorCallback);
+        }, this.showCamera, this.cameraErrorCallback);
       } else {
         alert('getUserMedia() is not supported in your browser');
       }

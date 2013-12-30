@@ -8,27 +8,51 @@ class Space
         @scene = new THREE.Scene
         @renderer = new THREE.WebGLRenderer
         @renderer.setSize(@container.offsetWidth, @container.offsetHeight)
+        @renderer.shadowMapEnabled = true
+        @renderer.shadowMapSoft = true
         #@renderer.setClearColor 0x0099FF, 1
         @container.appendChild( @renderer.domElement )
         
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
         @camera.position.set  0, 0, 10
         
-        @addLight  0,  0,  1, 0xffffff, 1.5
-        @addLight  0,  0, -1, 0xFFFF99, 1.5
-        @addLight  1,  0,  0, 0xFF66CC, 1.5
-        @addLight -1,  0,  0, 0x00FF33, 1.5
-        @addLight  0,  1,  0, 0x0033FF, 1.5
-        @addLight  0, -1,  0, 0xFF3300, 1.5
+        @addLight  0,  1,  0, 0xffffff, 1.0, castShadow = true
+        @addLight  0,  0,  1, 0xFF0000, 1.0
+        @addLight  0,  0, -1, 0x00FF00, 1.0
+        @addLight  1,  0,  0, 0x0000FF, 1.0
+        @addLight -1,  0,  0, 0xFFFF00, 1.0
+        #@scene.add(new THREE.AmbientLight(0x666666))
+        floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg")
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
+        floorTexture.repeat.set( 1, 1 );
+        plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial(map: floorTexture))
+        plane.rotation.x = -Math.PI / 2
+        plane.position.y = -3.5
+        plane.receiveShadow = true
+        @scene.add plane
         
         window.addEventListener 'resize', => @onWindowResize()
-        @container.addEventListener 'click', (evt) => @toggleFullScreen(evt)
+        @container.addEventListener 'dblclick', (evt) => @toggleFullScreen(evt)
         @start_stats()
 
 
-    addLight: (x, y, z, color, intensity) ->
+    addLight: (x, y, z, color, intensity, castShadow = false) ->
         light = new THREE.DirectionalLight color, intensity
-        light.position.set x, y, z
+        light.position.set x, y * 10, z
+        if castShadow
+            light.castShadow = true
+            light.shadowCameraNear = 0.01
+            #light.shadowCameraVisible = true
+            light.shadowMapWidth = 2048
+            light.shadowMapHeight = 2048
+            d = 10
+            light.shadowCameraLeft = -d
+            light.shadowCameraRight = d
+            light.shadowCameraTop = d
+            light.shadowCameraBottom = -d
+
+            light.shadowCameraFar = 100
+            light.shadowDarkness = 0.5
         @scene.add light
 
 
@@ -111,11 +135,6 @@ class Object3D
 
 
     update: (t_step, timestamp) ->
-        t_step
-
-
-    setObject3D: (m) ->
-        @object3D = m
 
 
     setPosition: (pos) ->
@@ -130,20 +149,37 @@ class Cube extends Object3D
     constructor: ->
         materials = @makeMaterials()
         material = new THREE.MeshFaceMaterial( materials )
+        #material = new THREE.MeshLambertMaterial({color: 0x0aeedf})
         geometry = new THREE.CubeGeometry(1, 1, 1)
-        mesh = new THREE.Mesh(geometry, material)
-        @setObject3D mesh
+        @object3D = new THREE.Mesh(geometry, material)
+        @object3D.castShadow = true
+        @object3D.receiveShadow = true
+        @rotStart = Math.PI * Math.random()
+
+
+    makeNumber: (n) ->
+        text = n.toString()
+        bitmap = document.createElement('canvas')
+        g = bitmap.getContext('2d')
+        bitmap.width = 100
+        bitmap.height = 100
+        g.fillStyle = '#FFFFFF'
+        g.fillRect(0, 0, bitmap.width, bitmap.height)
+        g.font = 'Bold 80px Arial'
+        g.fillStyle = 'black'
+        g.textBaseline = 'middle'
+        g.textAlign = 'center'
+        g.fillText(text, bitmap.width / 2, bitmap.height / 2)
+        bitmap
 
 
     makeMaterials: ->
         for i in [0..5]
-            new THREE.MeshPhongMaterial map: THREE.ImageUtils.loadTexture("img/Numbers-#{i}-icon.png")
+            texture = new THREE.Texture (@makeNumber i)
+            texture.needsUpdate = true
+            new THREE.MeshLambertMaterial map: texture
 
 
-    update: (t_step, timestamp) ->
-
-
-class CubeSpin extends Cube
     allowedRotations: (rot) ->
         [@rotX, @rotY, @rotZ] = rot
         @rotXspeed = 0.01
@@ -153,50 +189,38 @@ class CubeSpin extends Cube
 
     update: (t_step, timestamp) ->
         step = t_step / 16.7
+        t = new Date().getTime()
         if @rotX
             @object3D.rotation.x -= step * @rotXspeed
+            @object3D.position.x = @setPos[0] + Math.sin(t * 0.0015 + @rotStart)
         if @rotY
             @object3D.rotation.y -= step * @rotYspeed
-        if @rotZ
-            @object3D.rotation.z -= step * @rotZspeed
-        super t_step, timestamp
-
-
-class CubeRot extends CubeSpin
-    constructor: ->
-        @rotStart = Math.PI * Math.random()
-        super
-
-
-    update: (t_step, timestamp) ->
-        t = new Date().getTime()
-        if @rotY
-            @object3D.position.x = @setPos[0] + Math.sin(t * 0.0015 + @rotStart)
-        if @rotX
             @object3D.position.y = @setPos[1] + Math.sin(t * 0.0015 + @rotStart)
         if @rotZ
+            @object3D.rotation.z -= step * @rotZspeed
             @object3D.position.z = @setPos[2] + Math.sin(t * 0.0015 + @rotStart)
-        super t_step, timestamp
 
 
-
-makeGrid = (spacX = 1, spacY = 1, spacZ = 1, countX = 1, countY = 1, countZ = 1, center = true) ->
+makeGrid = ({spacing, count, centered}) ->
+    spacing ?= new THREE.Vector3(1, 1, 1)
+    count ?= new THREE.Vector3(1, 1, 1)
+    centered ?= true
+    center = new THREE.Vector3(0, 0, 0)
     result = []
-    centerX = if center then spacX * (countX - 1) / 2 else 0
-    centerY = if center then spacY * (countY - 1) / 2 else 0
-    centerZ = if center then spacZ * (countZ - 1) / 2 else 0
-    for x in [0...countX]
-        for y in [0...countY]
-            for z in [0...countZ]
-                result.push [x * spacX - centerX, y * spacY - centerY, z * spacZ - centerZ]
+    if centered
+        center.multiplyVectors spacing, (new THREE.Vector3()).subVectors(count, new THREE.Vector3(1, 1, 1))
+        center.divide (new THREE.Vector3(2, 2, 2))
+    for x in [0...count.x]
+        for y in [0...count.y]
+            for z in [0...count.z]
+                result.push [x * spacing.x - center.x, y * spacing.y - center.y, z * spacing.z - center.z]
     result
 
 
 makeCombinations = (size) ->
     for x in [0...Math.pow(2, size)]
-        s = x.toString(2)
-        zeros = new Array(size - s.length + 1).join('0')
-        i is '1' for i in (zeros + s)
+        for i in [0..size]
+            ((x >> i) & 1) is 1
 
 
 printout = (o) ->
@@ -205,10 +229,10 @@ printout = (o) ->
 
 run_cubes = (container) ->
     m = new Space container
-    grid = makeGrid spacX = 3, spacY = 3, spacZ = 0, countX = 4, countY = 2
+    grid = makeGrid spacing: new THREE.Vector3(3, 3, 0), count: new THREE.Vector3(4, 2, 1)
     rotations = makeCombinations 3
-    for [gpos, rpos] in _.zip grid, rotations
-        c = new CubeRot().setPosition(gpos).allowedRotations(rpos)
+    for [gpos, rot] in _.zip grid, rotations
+        c = new Cube().setPosition(gpos).allowedRotations(rot)
         m.add c
     m.run() 
 

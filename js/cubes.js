@@ -6,8 +6,7 @@
 
   Space = (function() {
     function Space(container) {
-      var castShadow, floorTexture, plane,
-        _this = this;
+      var _this = this;
       this.container = container;
       this.last_time = null;
       this.objects = [];
@@ -19,21 +18,6 @@
       this.container.appendChild(this.renderer.domElement);
       this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
       this.camera.position.set(0, 0, 10);
-      this.addLight(0, 1, 0, 0xffffff, 1.0, castShadow = true);
-      this.addLight(0, 0, 1, 0xFF0000, 1.0);
-      this.addLight(0, 0, -1, 0x00FF00, 1.0);
-      this.addLight(1, 0, 0, 0x0000FF, 1.0);
-      this.addLight(-1, 0, 0, 0xFFFF00, 1.0);
-      floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg");
-      floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-      floorTexture.repeat.set(1, 1);
-      plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial({
-        map: floorTexture
-      }));
-      plane.rotation.x = -Math.PI / 2;
-      plane.position.y = -3.5;
-      plane.receiveShadow = true;
-      this.scene.add(plane);
       window.addEventListener('resize', function() {
         return _this.onWindowResize();
       });
@@ -43,13 +27,17 @@
       this.start_stats();
     }
 
+    Space.prototype.addToScene = function(o) {
+      return this.scene.add(o);
+    };
+
     Space.prototype.addLight = function(x, y, z, color, intensity, castShadow) {
       var d, light;
       if (castShadow == null) {
         castShadow = false;
       }
       light = new THREE.DirectionalLight(color, intensity);
-      light.position.set(x, y * 10, z);
+      light.position.set(x, y, z);
       if (castShadow) {
         light.castShadow = true;
         light.shadowCameraNear = 0.01;
@@ -63,7 +51,7 @@
         light.shadowCameraFar = 100;
         light.shadowDarkness = 0.5;
       }
-      return this.scene.add(light);
+      return this.addToScene(light);
     };
 
     Space.prototype.isFullscreen = function() {
@@ -140,10 +128,12 @@
         this.last_time = timestamp;
       }
       t_step = timestamp - this.last_time;
-      this.update(t_step, timestamp);
-      this.render();
-      this.last_time = timestamp;
-      this.stats.update();
+      if (t_step > 0) {
+        this.update(t_step, timestamp);
+        this.render();
+        this.last_time = timestamp;
+        this.stats.update();
+      }
       return requestAnimationFrame(function(par) {
         return _this.run(par);
       });
@@ -198,9 +188,8 @@
       this.rotStart = Math.PI * Math.random();
     }
 
-    Cube.prototype.makeNumber = function(n) {
-      var bitmap, g, text;
-      text = n.toString();
+    Cube.prototype.makeTextureDraw = function(text) {
+      var bitmap, g;
       bitmap = document.createElement('canvas');
       g = bitmap.getContext('2d');
       bitmap.width = 100;
@@ -219,7 +208,7 @@
       var i, texture, _i, _results;
       _results = [];
       for (i = _i = 0; _i <= 5; i = ++_i) {
-        texture = new THREE.Texture(this.makeNumber(i));
+        texture = new THREE.Texture(this.makeTextureDraw(i.toString()));
         texture.needsUpdate = true;
         _results.push(new THREE.MeshLambertMaterial({
           map: texture
@@ -307,8 +296,21 @@
   };
 
   run_cubes = function(container) {
-    var c, gpos, grid, m, rot, rotations, _i, _len, _ref, _ref1;
-    m = new Space(container);
+    var c, castShadow, floorTexture, gpos, grid, plane, rot, rotations, s, _i, _len, _ref, _ref1;
+    s = new Space(container);
+    s.addLight(0, 10, 0, 0xffffff, 1.0, castShadow = true);
+    s.addLight(0, 0, 1, 0xFF0000, 1.0);
+    s.addLight(0, 0, -1, 0x00FF00, 1.0);
+    s.addLight(1, 0, 0, 0x0000FF, 1.0);
+    s.addLight(-1, 0, 0, 0xFFFF00, 1.0);
+    floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg");
+    plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial({
+      map: floorTexture
+    }));
+    plane.rotation.x = -Math.PI / 2;
+    plane.position.y = -3.5;
+    plane.receiveShadow = true;
+    s.addToScene(plane);
     grid = makeGrid({
       spacing: new THREE.Vector3(3, 3, 0),
       count: new THREE.Vector3(4, 2, 1)
@@ -318,9 +320,9 @@
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       _ref1 = _ref[_i], gpos = _ref1[0], rot = _ref1[1];
       c = new Cube().setPosition(gpos).allowedRotations(rot);
-      m.add(c);
+      s.add(c);
     }
-    return m.run();
+    return s.run();
   };
 
   window.LL = window.LL || {};

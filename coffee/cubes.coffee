@@ -12,33 +12,21 @@ class Space
         @renderer.shadowMapSoft = true
         #@renderer.setClearColor 0x0099FF, 1
         @container.appendChild( @renderer.domElement )
-        
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
         @camera.position.set  0, 0, 10
-        
-        @addLight  0,  1,  0, 0xffffff, 1.0, castShadow = true
-        @addLight  0,  0,  1, 0xFF0000, 1.0
-        @addLight  0,  0, -1, 0x00FF00, 1.0
-        @addLight  1,  0,  0, 0x0000FF, 1.0
-        @addLight -1,  0,  0, 0xFFFF00, 1.0
-        #@scene.add(new THREE.AmbientLight(0x666666))
-        floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg")
-        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-        floorTexture.repeat.set( 1, 1 );
-        plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial(map: floorTexture))
-        plane.rotation.x = -Math.PI / 2
-        plane.position.y = -3.5
-        plane.receiveShadow = true
-        @scene.add plane
-        
+        #@addToScene(new THREE.AmbientLight(0x666666))
         window.addEventListener 'resize', => @onWindowResize()
         @container.addEventListener 'dblclick', (evt) => @toggleFullScreen(evt)
         @start_stats()
 
 
+    addToScene: (o) ->
+        @scene.add o
+
+
     addLight: (x, y, z, color, intensity, castShadow = false) ->
         light = new THREE.DirectionalLight color, intensity
-        light.position.set x, y * 10, z
+        light.position.set x, y, z
         if castShadow
             light.castShadow = true
             light.shadowCameraNear = 0.01
@@ -53,7 +41,7 @@ class Space
 
             light.shadowCameraFar = 100
             light.shadowDarkness = 0.5
-        @scene.add light
+        @addToScene light
 
 
     isFullscreen: ->
@@ -113,10 +101,11 @@ class Space
         timestamp = 0 unless timestamp
         @last_time = timestamp unless @last_time
         t_step = timestamp - @last_time
-        @update(t_step, timestamp)
-        @render()
-        @last_time = timestamp
-        @stats.update()
+        if t_step > 0
+            @update(t_step, timestamp)
+            @render()
+            @last_time = timestamp
+            @stats.update()
         requestAnimationFrame (par) => @run par
 
 
@@ -157,8 +146,7 @@ class Cube extends Object3D
         @rotStart = Math.PI * Math.random()
 
 
-    makeNumber: (n) ->
-        text = n.toString()
+    makeTextureDraw: (text) ->
         bitmap = document.createElement('canvas')
         g = bitmap.getContext('2d')
         bitmap.width = 100
@@ -175,7 +163,7 @@ class Cube extends Object3D
 
     makeMaterials: ->
         for i in [0..5]
-            texture = new THREE.Texture (@makeNumber i)
+            texture = new THREE.Texture (@makeTextureDraw i.toString())
             texture.needsUpdate = true
             new THREE.MeshLambertMaterial map: texture
 
@@ -228,13 +216,31 @@ printout = (o) ->
 
 
 run_cubes = (container) ->
-    m = new Space container
+    s = new Space container
+
+    ## add lights
+    s.addLight  0,  10,  0, 0xffffff, 1.0, castShadow = true
+    s.addLight  0,  0,  1, 0xFF0000, 1.0
+    s.addLight  0,  0, -1, 0x00FF00, 1.0
+    s.addLight  1,  0,  0, 0x0000FF, 1.0
+    s.addLight -1,  0,  0, 0xFFFF00, 1.0
+
+    ## add floor
+    floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg")
+    #floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
+    #floorTexture.repeat.set 1, 1
+    plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial(map: floorTexture))
+    plane.rotation.x = -Math.PI / 2
+    plane.position.y = -3.5
+    plane.receiveShadow = true
+    s.addToScene plane
+
     grid = makeGrid spacing: new THREE.Vector3(3, 3, 0), count: new THREE.Vector3(4, 2, 1)
     rotations = makeCombinations 3
     for [gpos, rot] in _.zip grid, rotations
         c = new Cube().setPosition(gpos).allowedRotations(rot)
-        m.add c
-    m.run() 
+        s.add c
+    s.run() 
 
 
 window.LL = window.LL || {}

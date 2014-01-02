@@ -19,7 +19,7 @@ class Space
         @scene.add light
         
         window.addEventListener 'resize', => @onWindowResize()
-        @container.addEventListener 'click', (evt) => @toggleFullScreen(evt)
+        document.querySelector("#fullscreen p").addEventListener 'click', (evt) => @toggleFullScreen(evt)
         @start_stats()
 
 
@@ -34,7 +34,8 @@ class Space
 
 
     toggleFullScreen: (et) ->
-        el = et.target
+        #el = et.target
+        el = @container
         if not @isFullscreen()
             if el.requestFullscreen
                 el.requestFullscreen()

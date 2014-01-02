@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>WebGL with camera</title>
+<title>WebGL cubes</title>
     <link rel="stylesheet" href="css/main.css" />
     <script src="lib/three.min.js"></script>
     <script src="lib/stats.min.js"></script>
-    <script src="lib/underscore.js"></script>
-    <script src="js/faces.js"></script>
-    <script src="js/face_shapes.js"></script>
+    <script src="lib/underscore-min.js"></script>
+    <script src="js/scout.js"></script>
 </head>
 <body>
     <div id="container"></div>
     <div id="fullscreen"><p>go fullscreen</p></div>
     <script type="text/javascript">
         window.onload = function () {
-            LL.run_face_shapes(document.getElementById("container"))
+            LL.run_scout(document.getElementById("container"))
         }
     </script>
 </body>

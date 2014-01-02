@@ -23,7 +23,7 @@
       window.addEventListener('resize', function() {
         return _this.onWindowResize();
       });
-      this.container.addEventListener('click', function(evt) {
+      document.querySelector("#fullscreen p").addEventListener('click', function(evt) {
         return _this.toggleFullScreen(evt);
       });
       this.start_stats();
@@ -42,7 +42,7 @@
 
     Space.prototype.toggleFullScreen = function(et) {
       var el;
-      el = et.target;
+      el = this.container;
       if (!this.isFullscreen()) {
         if (el.requestFullscreen) {
           return el.requestFullscreen();

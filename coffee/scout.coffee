@@ -14,10 +14,10 @@ class Space
         @container.appendChild( @renderer.domElement )
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
         @camera.position.set  0, 5, 0
+        @camera.lookAt new THREE.Vector3 0,0,0
         #@addToScene(new THREE.AmbientLight(0x666666))
         window.addEventListener 'resize', => @onWindowResize()
         document.querySelector("#fullscreen p").addEventListener 'click', (evt) => @toggleFullScreen(evt)
-        #@container.addEventListener 'click', (evt) => @toggleFullScreen(evt)
         @start_stats()
 
 
@@ -31,7 +31,7 @@ class Space
         if castShadow
             light.castShadow = true
             light.shadowCameraNear = 0.01
-            #light.shadowCameraVisible = true
+            light.shadowCameraVisible = true
             light.shadowMapWidth = 2048
             light.shadowMapHeight = 2048
             d = 10
@@ -50,7 +50,6 @@ class Space
 
 
     toggleFullScreen: (et) ->
-        #el = et.target
         el = @container
         if not @isFullscreen()
             if el.requestFullscreen
@@ -75,10 +74,9 @@ class Space
         else
             w = @container.offsetWidth
             h = @container.offsetHeight
-        @renderer.setSize(w, h)
         @camera.aspect = w / h
         @camera.updateProjectionMatrix()
-        
+        @renderer.setSize(w, h)
 
 
     start_stats: ->
@@ -91,9 +89,9 @@ class Space
 
 
     update: (t_step, timestamp) ->
-        sin_speed = timestamp / 1000 / 5
-        @camera.position.x = Math.sin(sin_speed + Math.PI / 2) * 10
-        @camera.position.z = Math.sin(sin_speed) * 10
+        sin_speed = timestamp / 1000 / 4
+        @camera.position.x = Math.sin(sin_speed + Math.PI / 2) * 15
+        @camera.position.z = Math.sin(sin_speed) * 15
         @camera.lookAt(new THREE.Vector3(0,0,0))
         for o in @objects
             o.update(t_step, timestamp)
@@ -103,14 +101,10 @@ class Space
         @last_time = timestamp unless @last_time
         t_step = timestamp - @last_time
         if t_step > 0
-            # if t_step < 15
-            #     console.log t_step
             @update(t_step, timestamp)
             @render()
             @last_time = timestamp
             @stats.update()
-        else
-            @render()
         requestAnimationFrame (par) => @run par
 
 
@@ -127,6 +121,7 @@ class Object3D
 
 
     setPosition: (pos) ->
+        console.log pos
         @setPos = pos
         @object3D.position.x = pos[0]
         @object3D.position.y = pos[1]
@@ -136,118 +131,77 @@ class Object3D
 
 class Cube extends Object3D
     constructor: (@space) ->
-        materials = @makeMaterials()
-        material = new THREE.MeshFaceMaterial( materials )
-        #material = new THREE.MeshLambertMaterial({color: 0x0aeedf})
+        material = new THREE.MeshLambertMaterial(color: 0x888888)
         geometry = new THREE.CubeGeometry(1, 1, 1)
         @object3D = new THREE.Mesh(geometry, material)
         @object3D.castShadow = true
         @object3D.receiveShadow = true
-        @rotStart = Math.PI * Math.random()
 
-
-    makeTextureDraw: (text) ->
-        bitmap = document.createElement('canvas')
-        g = bitmap.getContext('2d')
-        bitmap.width = 100
-        bitmap.height = 100
-        g.fillStyle = '#404040'
-        g.fillRect(0,0,bitmap.width,bitmap.height)
-        g.fillStyle = '#FFFFFF'
-        g.fillRect(10,10,80,80)
-        
-        #g.fillRect(0, 0, bitmap.width, bitmap.height)
-        g.font = 'Bold 80px Arial'
-        g.fillStyle = '#202020'
-        g.textBaseline = 'middle'
-        g.textAlign = 'center'
-        g.fillText(text, bitmap.width / 2, bitmap.height / 2)
-        bitmap
-
-
-    makeMaterials: ->
-        for i in [0..5]
-            texture = new THREE.Texture (@makeTextureDraw i.toString())
-            texture.needsUpdate = true
-            texture.anisotropy = @space.renderer.getMaxAnisotropy()
-            new THREE.MeshLambertMaterial map: texture
-
-
-    setRotations: (rot) ->
-        [@rotXspeed, @rotYspeed, @rotZspeed] = rot
-        @
 
     update: (t_step, timestamp) ->
-        step = t_step / 16.7
-        sin_step = timestamp / 1000 * 1.5
-        if @rotXspeed != 0
-            @object3D.rotation.x -= step * @rotXspeed
-            @object3D.position.x = @setPos[0] + Math.sin(sin_step + @rotStart)
-        if @rotYspeed != 0
-            @object3D.rotation.y -= step * @rotYspeed
-            @object3D.position.y = @setPos[1] + Math.sin(sin_step + @rotStart)
-        if @rotZspeed != 0
-            @object3D.rotation.z -= step * @rotZspeed
-            @object3D.position.z = @setPos[2] + Math.sin(sin_step + @rotStart)
 
 
-makeGrid = ({spacing, count, centered}) ->
-    spacing ?= new THREE.Vector3(1, 1, 1)
-    count ?= new THREE.Vector3(1, 1, 1)
-    centered ?= true
-    center = new THREE.Vector3(0, 0, 0)
-    result = []
-    if centered
-        center.multiplyVectors spacing, (new THREE.Vector3()).subVectors(count, new THREE.Vector3(1, 1, 1))
-        center.divide (new THREE.Vector3(2, 2, 2))
-    for x in [0...count.x]
-        for y in [0...count.y]
-            for z in [0...count.z]
-                result.push [x * spacing.x - center.x, y * spacing.y - center.y, z * spacing.z - center.z]
-    result
+makeMaze = (x, y) ->
+    size = x * y
+    mazeArray = ((true for _ in [0...y]) for _ in [0...x])
+    startX = _.random(0, x - 1)
+    startY = _.random(0, y - 1)
+    mazeArray[startX][startY] = 'space'
+    wall = neighbourWalls startX, startY, x, y
+    while wall.length() > 0
+        w = wall.pop()
+        if breakWall w
+            mazeArray[w.x][w.y] = 'space'
+            for w in neighbourWalls w.x, w.y, x, y
+                wall.push w
+    mazeArray
 
 
-makeCombinations = (size) ->
-    for x in [0...Math.pow(2, size)]
-        for i in [0..size]
-            ((x >> i) & 1) is 1
+removePercentMaze = (maze, spars) ->
+    p = spars / 100
+    for mx, i in maze
+        for mz, j in mx
+            if Math.random() < p
+                if maze[i][j]
+                    maze[i][j] = false
+    maze
 
 
 printout = (o) ->
     console.log JSON.stringify o
 
 
-run_cubes = (container) ->
+run_scout = (container) ->
+    sizeX = 15
+    sizeZ = 16
     s = new Space container
 
     ## add lights
-    s.addLight  0,  10,  0, 0xffffff, 1.0, castShadow = true
-    s.addLight  0,  0,  1, 0xFF0000, 1.0
-    s.addLight  0,  0, -1, 0x00FF00, 1.0
-    s.addLight  1,  0,  0, 0x0000FF, 1.0
-    s.addLight -1,  0,  0, 0xFFFF00, 1.0
-
+    #s.addToScene (new THREE.AmbientLight 0xffffff, 0.2)
+    # spotLight = new THREE.SpotLight 0xffffff, 1.0
+    # spotLight.position.set 5, 5, 5
+    # spotLight.castShadow = true
+    # s.addToScene spotLight
+    s.addLight  5,  10,  5, 0xffffff, 0.3, castShadow = true
     ## add floor
-    floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg")
-    floorTexture.anisotropy = s.renderer.getMaxAnisotropy()
-    #floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
-    #floorTexture.repeat.set 1, 1
-    plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial(map: floorTexture))
+    plane = new THREE.Mesh(new THREE.PlaneGeometry(sizeX, sizeZ), new THREE.MeshBasicMaterial(color: 0x404040))
     plane.rotation.x = -Math.PI / 2
-    plane.position.y = -3.5
+    plane.position.y = 0
     plane.receiveShadow = true
     s.addToScene plane
 
-    grid = makeGrid spacing: new THREE.Vector3(3, 3, 0), count: new THREE.Vector3(4, 2, 1)
-    rotations = makeCombinations 3
-    for [gpos, rot] in _.zip grid, rotations
-        c = new Cube(s).setPosition(gpos).setRotations((if r then 0.01 else 0) for r in rot)
-        s.add c
+    maze = makeMaze sizeX, sizeZ
+    maze = removePercentMaze maze, 50
+    for x in [0...sizeX]
+        for z in [0...sizeZ]
+            if maze[x][z]
+                gx = -(sizeX / 2) + 0.5 + x
+                gz = -(sizeZ / 2) + 0.5 + z
+                c = new Cube(s).setPosition([gx, 0.5, gz])
+                s.addToScene c.object3D
     s.run window.performance.now()
 
 
 window.LL = window.LL || {}
-window.LL.run_cubes = run_cubes
-
-#window.onload = -> run_cubes document.getElementById "container"
+window.LL.run_scout = run_scout
         

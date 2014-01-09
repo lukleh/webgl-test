@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>WebGL cubes</title>
+<title>WebGL scout</title>
     <link rel="stylesheet" href="css/main.css" />
     <script src="lib/three.min.js"></script>
     <script src="lib/stats.min.js"></script>
     <script src="lib/underscore-min.js"></script>
+    <script src="lib/screenfull.min.js"></script>
+    <script src="js/detect_webgl.js"></script>
+    <script src="js/run_demo.js"></script>
     <script src="js/scout.js"></script>
 </head>
-<body>
+<body onLoad="LL.runDemo(LL.run_scout);">
     <div id="container"></div>
-    <div id="fullscreen"><p>go fullscreen</p></div>
-    <script type="text/javascript">
-        window.onload = function () {
-            LL.run_scout(document.getElementById("container"))
-        }
-    </script>
+    <div id="hud"><p>toggle fullscreen</p></div>
+    <div id="webglfallback">
+        <h1>Your browser does not appear to support WebGL</h1>
+            <p>Please visit <a href="http://get.webgl.org/troubleshooting/">http://get.webgl.org/troubleshooting/</a>
+            </p>
+    </div>
 </body>
 </html>

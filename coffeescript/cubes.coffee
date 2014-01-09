@@ -14,10 +14,7 @@ class Space
         @container.appendChild( @renderer.domElement )
         @camera = new THREE.PerspectiveCamera(45, @container.offsetWidth / @container.offsetHeight, 1, 4000 )
         @camera.position.set  0, 5, 0
-        #@addToScene(new THREE.AmbientLight(0x666666))
         window.addEventListener 'resize', => @onWindowResize()
-        document.querySelector("#fullscreen p").addEventListener 'click', (evt) => @toggleFullScreen(evt)
-        #@container.addEventListener 'click', (evt) => @toggleFullScreen(evt)
         @start_stats()
 
 
@@ -43,29 +40,6 @@ class Space
             light.shadowCameraFar = 100
             light.shadowDarkness = 0.5
         @addToScene light
-
-
-    isFullscreen: ->
-        document.webkitIsFullScreen || document.mozFullScreen
-
-
-    toggleFullScreen: (et) ->
-        #el = et.target
-        el = @container
-        if not @isFullscreen()
-            if el.requestFullscreen
-                el.requestFullscreen()
-            else if el.mozRequestFullScreen
-                el.mozRequestFullScreen()
-            else if el.webkitRequestFullscreen
-                el.webkitRequestFullscreen Element.ALLOW_KEYBOARD_INPUT
-        else
-            if document.cancelFullScreen
-                document.cancelFullScreen()
-            else if document.mozCancelFullScreen
-                document.mozCancelFullScreen()
-            else if document.webkitCancelFullScreen
-                document.webkitCancelFullScreen()
 
 
     onWindowResize: ->
@@ -103,8 +77,6 @@ class Space
         @last_time = timestamp unless @last_time
         t_step = timestamp - @last_time
         if t_step > 0
-            # if t_step < 15
-            #     console.log t_step
             @update(t_step, timestamp)
             @render()
             @last_time = timestamp
@@ -248,6 +220,4 @@ run_cubes = (container) ->
 
 window.LL = window.LL || {}
 window.LL.run_cubes = run_cubes
-
-#window.onload = -> run_cubes document.getElementById "container"
         

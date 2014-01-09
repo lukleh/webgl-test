@@ -14,19 +14,18 @@ body {
     height: 100%;
 }
 
-#fullscreen {
+#hud {
     width: 100%;
     padding: 10px 15px;
     top: 0px;
-    z-index: 10;
     position: absolute;
     text-align: center;
 }
 
-#fullscreen p {
+#hud p {
     display: inline-block;
     vertical-align: middle;
-    width: 120px;
+    width: 145px;
     padding: 10px 15px;
     border: #a0a0a0 solid 1px;
     margin: 0px;
@@ -37,4 +36,8 @@ body {
     opacity: 0.4;
     color: #FFFFFF;
     cursor:pointer;
+}
+
+#webglfallback {
+    display: none;
 }

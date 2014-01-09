@@ -19,37 +19,7 @@ class Space
         @scene.add light
         
         window.addEventListener 'resize', => @onWindowResize()
-        document.querySelector("#fullscreen p").addEventListener 'click', (evt) => @toggleFullScreen(evt)
         @start_stats()
-
-
-    addLight: (x, y, z, color, intensity) ->
-        light = new THREE.DirectionalLight color, intensity
-        light.position.set x, y, z
-        @scene.add light
-
-
-    isFullscreen: ->
-        document.webkitIsFullScreen || document.mozFullScreen
-
-
-    toggleFullScreen: (et) ->
-        #el = et.target
-        el = @container
-        if not @isFullscreen()
-            if el.requestFullscreen
-                el.requestFullscreen()
-            else if el.mozRequestFullScreen
-                el.mozRequestFullScreen()
-            else if el.webkitRequestFullscreen
-                el.webkitRequestFullscreen Element.ALLOW_KEYBOARD_INPUT
-        else
-            if document.cancelFullScreen
-                document.cancelFullScreen()
-            else if document.mozCancelFullScreen
-                document.mozCancelFullScreen()
-            else if document.webkitCancelFullScreen
-                document.webkitCancelFullScreen()
 
 
     onWindowResize: ->
@@ -79,13 +49,15 @@ class Space
 
 
     run: (timestamp) ->
-        timestamp = 0 unless timestamp
         @last_time = timestamp unless @last_time
         t_step = timestamp - @last_time
-        @update(t_step, timestamp)
-        @render()
-        @last_time = timestamp
-        @stats.update()
+        if t_step > 0
+            @update(t_step, timestamp)
+            @render()
+            @last_time = timestamp
+            @stats.update()
+        else
+            @render()
         requestAnimationFrame (par) => @run par
 
 
@@ -189,7 +161,7 @@ run_face_shapes = (container) ->
     m.add(new Cube(f.video, dim = 1.5).setPosition([-2.5, 0, 0]).allowedRotations([false, true, false]))
     m.add(new Sphere(f.video).allowedRotations([false, true, false]))
     m.add(new CylinderGeometry(f.video).setPosition([2.5, 0, 0]).allowedRotations([false, true, false]))
-    m.run() 
+    m.run window.performance.now()
 
 
 window.LL = window.LL || {}

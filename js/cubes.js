@@ -21,9 +21,6 @@
       window.addEventListener('resize', function() {
         return _this.onWindowResize();
       });
-      document.querySelector("#fullscreen p").addEventListener('click', function(evt) {
-        return _this.toggleFullScreen(evt);
-      });
       this.start_stats();
     }
 
@@ -52,32 +49,6 @@
         light.shadowDarkness = 0.5;
       }
       return this.addToScene(light);
-    };
-
-    Space.prototype.isFullscreen = function() {
-      return document.webkitIsFullScreen || document.mozFullScreen;
-    };
-
-    Space.prototype.toggleFullScreen = function(et) {
-      var el;
-      el = this.container;
-      if (!this.isFullscreen()) {
-        if (el.requestFullscreen) {
-          return el.requestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-          return el.mozRequestFullScreen();
-        } else if (el.webkitRequestFullscreen) {
-          return el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        }
-      } else {
-        if (document.cancelFullScreen) {
-          return document.cancelFullScreen();
-        } else if (document.mozCancelFullScreen) {
-          return document.mozCancelFullScreen();
-        } else if (document.webkitCancelFullScreen) {
-          return document.webkitCancelFullScreen();
-        }
-      }
     };
 
     Space.prototype.onWindowResize = function() {

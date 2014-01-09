@@ -23,44 +23,8 @@
       window.addEventListener('resize', function() {
         return _this.onWindowResize();
       });
-      document.querySelector("#fullscreen p").addEventListener('click', function(evt) {
-        return _this.toggleFullScreen(evt);
-      });
       this.start_stats();
     }
-
-    Space.prototype.addLight = function(x, y, z, color, intensity) {
-      var light;
-      light = new THREE.DirectionalLight(color, intensity);
-      light.position.set(x, y, z);
-      return this.scene.add(light);
-    };
-
-    Space.prototype.isFullscreen = function() {
-      return document.webkitIsFullScreen || document.mozFullScreen;
-    };
-
-    Space.prototype.toggleFullScreen = function(et) {
-      var el;
-      el = this.container;
-      if (!this.isFullscreen()) {
-        if (el.requestFullscreen) {
-          return el.requestFullscreen();
-        } else if (el.mozRequestFullScreen) {
-          return el.mozRequestFullScreen();
-        } else if (el.webkitRequestFullscreen) {
-          return el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        }
-      } else {
-        if (document.cancelFullScreen) {
-          return document.cancelFullScreen();
-        } else if (document.mozCancelFullScreen) {
-          return document.mozCancelFullScreen();
-        } else if (document.webkitCancelFullScreen) {
-          return document.webkitCancelFullScreen();
-        }
-      }
-    };
 
     Space.prototype.onWindowResize = function() {
       var h, w;
@@ -98,17 +62,18 @@
     Space.prototype.run = function(timestamp) {
       var t_step,
         _this = this;
-      if (!timestamp) {
-        timestamp = 0;
-      }
       if (!this.last_time) {
         this.last_time = timestamp;
       }
       t_step = timestamp - this.last_time;
-      this.update(t_step, timestamp);
-      this.render();
-      this.last_time = timestamp;
-      this.stats.update();
+      if (t_step > 0) {
+        this.update(t_step, timestamp);
+        this.render();
+        this.last_time = timestamp;
+        this.stats.update();
+      } else {
+        this.render();
+      }
       return requestAnimationFrame(function(par) {
         return _this.run(par);
       });
@@ -280,7 +245,7 @@
     m.add(new Cube(f.video, dim = 1.5).setPosition([-2.5, 0, 0]).allowedRotations([false, true, false]));
     m.add(new Sphere(f.video).allowedRotations([false, true, false]));
     m.add(new CylinderGeometry(f.video).setPosition([2.5, 0, 0]).allowedRotations([false, true, false]));
-    return m.run();
+    return m.run(window.performance.now());
   };
 
   window.LL = window.LL || {};

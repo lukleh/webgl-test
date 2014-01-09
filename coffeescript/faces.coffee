@@ -48,13 +48,13 @@ class Face
         @
 
 
-run_face = ->
+run_faces = ->
     video = document.querySelector 'video'
     face = new Face().setVideoElement(video).doFace()
 
 
 window.LL = window.LL || {}
 window.LL.Face = Face
-window.LL.run_face = run_face
+window.LL.run_faces = run_faces
 
 

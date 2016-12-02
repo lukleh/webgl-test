@@ -1,3 +1,3 @@
 webgl demos
 ==========
-[listing of demos](http://lukleh.github.io/webgl-test/)
+[listing of demos](https://lukleh.github.io/webgl-test/)

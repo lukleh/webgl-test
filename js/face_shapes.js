@@ -31,20 +31,20 @@ Space = (function() {
     this.last_time = null;
     this.objects = [];
     this.scene = new THREE.Scene;
-    this.renderer = new THREE.WebGLRenderer;
+    this.renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      preserveDrawingBuffer: true 
+    });
+    // Configure renderer for proper color space and gamma
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
     this.container.appendChild(this.renderer.domElement);
     this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
     this.camera.position.set(0, 2, 7);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-    // Add bright ambient light for better video visibility
-    light = new THREE.AmbientLight(0xffffff, 1.5);
-    this.scene.add(light);
-
-    // Add directional light for some depth
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    dirLight.position.set(1, 1, 1);
-    this.scene.add(dirLight);
+    // No lights needed since MeshBasicMaterial doesn't require lighting
+    
     window.addEventListener('resize', function() {
       return _this.onWindowResize();
     });
@@ -126,12 +126,13 @@ Object3Dcamera = (function() {
     // Use modern texture settings (THREE.RGBFormat is deprecated)
     this.videoTexture.minFilter = THREE.LinearFilter;
     this.videoTexture.magFilter = THREE.LinearFilter;
-    // Don't set format explicitly, let Three.js handle it automatically
-
+    this.videoTexture.encoding = THREE.sRGBEncoding;
+    
     // Use MeshBasicMaterial for video to avoid lighting issues
     this.material = new THREE.MeshBasicMaterial({
       map: this.videoTexture,
-      side: THREE.DoubleSide // Show texture on both sides
+      side: THREE.DoubleSide, // Show texture on both sides
+      color: 0xffffff // Ensure no tint is applied
     });
   }
 

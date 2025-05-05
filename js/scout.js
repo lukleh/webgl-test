@@ -27,8 +27,9 @@
       this.scene = new THREE.Scene;
       this.renderer = new THREE.WebGLRenderer;
       this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-      this.renderer.shadowMapEnabled = true;
-      this.renderer.shadowMapSoft = true;
+      // Update deprecated shadow map properties
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       this.container.appendChild(this.renderer.domElement);
       this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
       this.camera.position.set(7, 5, 7);
@@ -52,16 +53,18 @@
       light.position.set(x, y, z);
       if (castShadow) {
         light.castShadow = true;
-        light.shadowCameraNear = 0.01;
-        light.shadowMapWidth = 2048;
-        light.shadowMapHeight = 2048;
+        // Update deprecated shadow camera properties
         d = 10;
-        light.shadowCameraLeft = -d;
-        light.shadowCameraRight = d;
-        light.shadowCameraTop = d;
-        light.shadowCameraBottom = -d;
-        light.shadowCameraFar = 100;
-        light.shadowDarkness = 0.5;
+        light.shadow.camera.near = 0.01;
+        light.shadow.camera.far = 100;
+        light.shadow.camera.left = -d;
+        light.shadow.camera.right = d;
+        light.shadow.camera.top = d;
+        light.shadow.camera.bottom = -d;
+        // Update deprecated shadow map properties
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        // shadowDarkness is removed in newer versions, use opacity in material instead
       }
       return this.addToScene(light);
     };
@@ -164,7 +167,8 @@
       this.dimX = normalDist() * (1 - 0.2) + 0.2;
       this.dimZ = this.dimX;
       this.dimY = this.volume / (this.dimX * this.dimZ);
-      geometry = new THREE.CubeGeometry(this.dimX, this.dimY, this.dimZ);
+      // Replace deprecated CubeGeometry with BoxGeometry
+      geometry = new THREE.BoxGeometry(this.dimX, this.dimY, this.dimZ);
       this.object3D = new THREE.Mesh(geometry, material);
     }
 
@@ -391,9 +395,12 @@
       lp = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
         color: color
       }));
-      lp.position = light = new THREE.PointLight(color, 1.0, 4);
-      lp.position = light.position;
-      this.space.addToScene(lp);
+      // Create the point light
+      light = new THREE.PointLight(color, 1.0, 4);
+      // Add the mesh as a child of the light so they move together
+      light.add(lp);
+      // Add the light to the scene (not the mesh directly)
+      this.space.addToScene(light);
       this.object3D = light;
       _ref = this.maze.randomEmptyCell(), i = _ref[0], j = _ref[1];
       _ref1 = maze.fromGridCoords(i, j), sx = _ref1[0], sy = _ref1[1], sz = _ref1[2];

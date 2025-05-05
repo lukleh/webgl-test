@@ -27,8 +27,9 @@
       this.scene = new THREE.Scene;
       this.renderer = new THREE.WebGLRenderer;
       this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-      this.renderer.shadowMapEnabled = true;
-      this.renderer.shadowMapSoft = true;
+      // Update deprecated shadow map properties
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       this.container.appendChild(this.renderer.domElement);
       this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
       this.camera.position.set(0, 5, 0);
@@ -51,16 +52,18 @@
       light.position.set(x, y, z);
       if (castShadow) {
         light.castShadow = true;
-        light.shadowCameraNear = 0.01;
-        light.shadowMapWidth = 2048;
-        light.shadowMapHeight = 2048;
+        // Update deprecated shadow camera properties
         d = 10;
-        light.shadowCameraLeft = -d;
-        light.shadowCameraRight = d;
-        light.shadowCameraTop = d;
-        light.shadowCameraBottom = -d;
-        light.shadowCameraFar = 100;
-        light.shadowDarkness = 0.5;
+        light.shadow.camera.near = 0.01;
+        light.shadow.camera.far = 100;
+        light.shadow.camera.left = -d;
+        light.shadow.camera.right = d;
+        light.shadow.camera.top = d;
+        light.shadow.camera.bottom = -d;
+        // Update deprecated shadow map properties
+        light.shadow.mapSize.width = 2048;
+        light.shadow.mapSize.height = 2048;
+        // shadowDarkness is removed in newer versions, use opacity in material instead
       }
       return this.addToScene(light);
     };
@@ -159,8 +162,10 @@
       var geometry, material, materials;
       this.space = space;
       materials = this.makeMaterials();
-      material = new THREE.MeshFaceMaterial(materials);
-      geometry = new THREE.CubeGeometry(1, 1, 1);
+      // Replace deprecated MeshFaceMaterial with an array of materials
+      material = materials;
+      // Replace deprecated CubeGeometry with BoxGeometry
+      geometry = new THREE.BoxGeometry(1, 1, 1);
       this.object3D = new THREE.Mesh(geometry, material);
       this.object3D.castShadow = true;
       this.object3D.receiveShadow = true;
@@ -191,7 +196,8 @@
       for (i = _i = 0; _i <= 5; i = ++_i) {
         texture = new THREE.Texture(this.makeTextureDraw(i.toString()));
         texture.needsUpdate = true;
-        texture.anisotropy = this.space.renderer.getMaxAnisotropy();
+        // Use capabilities.getMaxAnisotropy instead of deprecated getMaxAnisotropy
+        texture.anisotropy = this.space.renderer.capabilities.getMaxAnisotropy();
         _results.push(new THREE.MeshLambertMaterial({
           map: texture
         }));
@@ -236,8 +242,11 @@
     s.addLight(0, 0, -1, 0x00FF00, 1.0);
     s.addLight(1, 0, 0, 0x0000FF, 1.0);
     s.addLight(-1, 0, 0, 0xFFFF00, 1.0);
-    floorTexture = THREE.ImageUtils.loadTexture("img/tile.jpg");
-    floorTexture.anisotropy = s.renderer.getMaxAnisotropy();
+    // Use TextureLoader instead of deprecated ImageUtils.loadTexture
+    const textureLoader = new THREE.TextureLoader();
+    floorTexture = textureLoader.load("img/tile.jpg");
+    // Use capabilities.getMaxAnisotropy instead of deprecated getMaxAnisotropy
+    floorTexture.anisotropy = s.renderer.capabilities.getMaxAnisotropy();
     plane = new THREE.Mesh(new THREE.PlaneGeometry(15, 15, 1, 1), new THREE.MeshPhongMaterial({
       map: floorTexture
     }));

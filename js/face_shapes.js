@@ -32,8 +32,14 @@
       this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
       this.camera.position.set(0, 2, 7);
       this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-      light = new THREE.AmbientLight(0xffffff);
+      // Add bright ambient light for better video visibility
+      light = new THREE.AmbientLight(0xffffff, 1.5);
       this.scene.add(light);
+
+      // Add directional light for some depth
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      dirLight.position.set(1, 1, 1);
+      this.scene.add(dirLight);
       window.addEventListener('resize', function() {
         return _this.onWindowResize();
       });
@@ -110,9 +116,17 @@
   Object3Dcamera = (function() {
     function Object3Dcamera(video) {
       this.video = video;
-      this.videoTexture = new THREE.Texture(this.video);
-      this.material = new THREE.MeshLambertMaterial({
-        map: this.videoTexture
+      // Create texture with proper settings for video
+      this.videoTexture = new THREE.VideoTexture(this.video);
+      // Use modern texture settings (THREE.RGBFormat is deprecated)
+      this.videoTexture.minFilter = THREE.LinearFilter;
+      this.videoTexture.magFilter = THREE.LinearFilter;
+      // Don't set format explicitly, let Three.js handle it automatically
+
+      // Use MeshBasicMaterial for video to avoid lighting issues
+      this.material = new THREE.MeshBasicMaterial({
+        map: this.videoTexture,
+        side: THREE.DoubleSide // Show texture on both sides
       });
     }
 
@@ -121,9 +135,9 @@
     };
 
     Object3Dcamera.prototype.update = function(t_step, timestamp) {
-      if (this.video && this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
-        return this.videoTexture.needsUpdate = true;
-      }
+      // VideoTexture automatically updates itself, no need to set needsUpdate
+      // Just ensure video is ready
+      return (this.video && this.video.readyState === this.video.HAVE_ENOUGH_DATA);
     };
 
     Object3Dcamera.prototype.setObject3D = function(m) {
@@ -189,7 +203,8 @@
         dim = 1;
       }
       Cube.__super__.constructor.call(this, video);
-      geometry = new THREE.CubeGeometry(dim, dim, dim);
+      // Replace deprecated CubeGeometry with BoxGeometry
+      geometry = new THREE.BoxGeometry(dim, dim, dim);
       mesh = new THREE.Mesh(geometry, this.material);
       this.setObject3D(mesh);
       this.object3D.rotation.y = Math.PI / 4;

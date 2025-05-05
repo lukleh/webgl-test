@@ -33,9 +33,13 @@
      */
     autoCreateVideo() {
       this.video = document.createElement('video');
-      this.video.width = 640;
-      this.video.height = 360;
+      // Set video properties for better texture compatibility
+      this.video.width = 512;  // Power of 2 for better WebGL texture compatibility
+      this.video.height = 512; // Power of 2 for better WebGL texture compatibility
       this.video.autoplay = true;
+      this.video.playsInline = true; // Important for mobile
+      this.video.muted = true; // Needed for autoplay in some browsers
+      this.video.crossOrigin = "anonymous"; // Handle cross-origin issues
       return this;
     }
 
@@ -71,7 +75,21 @@
           console.error('Error creating object URL:', error);
         }
       }
-      this.video.onloadedmetadata = function() {};
+
+      // Ensure video plays when metadata is loaded
+      this.video.onloadedmetadata = () => {
+        // Try to play the video
+        const playPromise = this.video.play();
+
+        // Handle play promise (required for newer browsers)
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error('Video play error:', error);
+            // Auto-play was prevented, try with user interaction
+            console.log('Autoplay prevented. Click to play video.');
+          });
+        }
+      };
     }
 
     /**

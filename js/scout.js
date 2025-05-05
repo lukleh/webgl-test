@@ -163,8 +163,8 @@ Cube = (function(_super) {
     var geometry, material;
     this.space = space;
     material = new THREE.MeshLambertMaterial({
-      color: 0x888888,
-      opacity: 0.5,
+      color: 0xaaaaaa,
+      opacity: 0.7,
       transparent: true
     });
     this.volume = normalDist() * (1 - 0.4) + 0.1;
@@ -400,7 +400,7 @@ Scout = (function(_super) {
       color: color
     }));
     // Create the point light
-    light = new THREE.PointLight(color, 1.0, 4);
+    light = new THREE.PointLight(color, 2.0, 8);
     // Add the mesh as a child of the light so they move together
     light.add(lp);
     // Add the light to the scene (not the mesh directly)
@@ -436,10 +436,10 @@ run_scout = function(container) {
   sizeX = 15;
   sizeZ = 15;
   s = new Space(container);
-  s.addToScene(new THREE.AmbientLight(0x101010));
-  s.addLight(3, 10, 2, 0x505050, 0.3);
+  s.addToScene(new THREE.AmbientLight(0x404040));
+  s.addLight(3, 10, 2, 0x808080, 0.8);
   plane = new THREE.Mesh(new THREE.PlaneGeometry(sizeX, sizeZ, 50, 50), new THREE.MeshLambertMaterial({
-    color: 0x404040
+    color: 0x606060
   }));
   plane.rotation.x = -Math.PI / 2;
   plane.position.y = 0;

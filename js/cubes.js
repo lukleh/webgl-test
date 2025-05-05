@@ -241,11 +241,15 @@ Cube = (function(_super) {
 window.LL.run_cubes = function(container) {
   var c, castShadow, floorTexture, gpos, grid, plane, r, rot, rotations, s, _i, _len, _ref, _ref1;
   s = new Space(container);
-  s.addLight(0, 10, 0, 0xffffff, 1.0, castShadow = true);
-  s.addLight(0, 0, 1, 0xFF0000, 1.0);
-  s.addLight(0, 0, -1, 0x00FF00, 1.0);
-  s.addLight(1, 0, 0, 0x0000FF, 1.0);
-  s.addLight(-1, 0, 0, 0xFFFF00, 1.0);
+  // Add ambient light for overall scene brightness
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+  s.addToScene(ambientLight);
+  
+  s.addLight(0, 10, 0, 0xffffff, 1.5, castShadow = true);
+  s.addLight(0, 0, 1, 0xFF0000, 1.5);
+  s.addLight(0, 0, -1, 0x00FF00, 1.5);
+  s.addLight(1, 0, 0, 0x0000FF, 1.5);
+  s.addLight(-1, 0, 0, 0xFFFF00, 1.5);
   // Use TextureLoader instead of deprecated ImageUtils.loadTexture
   const textureLoader = new THREE.TextureLoader();
   floorTexture = textureLoader.load("img/tile.jpg");

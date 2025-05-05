@@ -300,8 +300,15 @@
         }
         return _results;
       }).call(this);
-      startX = _.random(0, this.dimX - 1);
-      startY = _.random(0, this.dimY - 1);
+      // Generate random integers between min and max (inclusive)
+      function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      startX = getRandomInt(0, this.dimX - 1);
+      startY = getRandomInt(0, this.dimY - 1);
       this.mazeWalls[startX][startY] = false;
       wall = this.neighbourWalls(startX, startY);
       while (wall.length > 0) {

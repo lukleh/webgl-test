@@ -282,9 +282,21 @@
       count: new THREE.Vector3(4, 2, 1)
     });
     rotations = makeCombinations(3);
-    _ref = _.zip(grid, rotations);
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      _ref1 = _ref[_i], gpos = _ref1[0], rot = _ref1[1];
+
+    // Create a zip function to replace _.zip
+    function zip(arrays) {
+      return arrays[0].map(function(_, i) {
+        return arrays.map(function(array) {
+          return array[i];
+        });
+      });
+    }
+
+    // Zip the grid and rotations arrays
+    var zipped = zip([grid, rotations]);
+
+    for (_i = 0, _len = zipped.length; _i < _len; _i++) {
+      _ref1 = zipped[_i], gpos = _ref1[0], rot = _ref1[1];
       c = new Cube(s).setPosition(gpos).setRotations((function() {
         var _j, _len1, _results;
         _results = [];

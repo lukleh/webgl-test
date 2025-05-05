@@ -1,465 +1,466 @@
 /**
  * WebGL Scout Demo
  */
-(function() {
-  'use strict';
+import * as THREE from 'three';
 
-  var Cube, Maze, Object3D, Scout, Space, normalDist, run_scout;
+// Preserve existing global objects in case they're accessed from other scripts
+if (typeof window.LL === 'undefined') {
+  window.LL = {};
+}
 
-  // Helper function for inheritance
-  function extend(child, parent) {
-    for (var key in parent) {
-      if ({}.hasOwnProperty.call(parent, key)) child[key] = parent[key];
-    }
-    function ctor() { this.constructor = child; }
-    ctor.prototype = parent.prototype;
-    child.prototype = new ctor();
-    child.__super__ = parent.prototype;
-    return child;
+var Cube, Maze, Object3D, Scout, Space, normalDist, run_scout;
+
+// Helper function for inheritance
+function extend(child, parent) {
+  for (var key in parent) {
+    if ({}.hasOwnProperty.call(parent, key)) child[key] = parent[key];
+  }
+  function ctor() { this.constructor = child; }
+  ctor.prototype = parent.prototype;
+  child.prototype = new ctor();
+  child.__super__ = parent.prototype;
+  return child;
+}
+
+Space = (function() {
+  function Space(container) {
+    var _this = this;
+    this.container = container;
+    this.last_time = null;
+    this.objects = [];
+    this.scene = new THREE.Scene;
+    this.renderer = new THREE.WebGLRenderer;
+    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
+    // Update deprecated shadow map properties
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.container.appendChild(this.renderer.domElement);
+    this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
+    this.camera.position.set(7, 5, 7);
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    window.addEventListener('resize', function() {
+      return _this.onWindowResize();
+    });
+    this.start_stats();
   }
 
-  Space = (function() {
-    function Space(container) {
-      var _this = this;
-      this.container = container;
-      this.last_time = null;
-      this.objects = [];
-      this.scene = new THREE.Scene;
-      this.renderer = new THREE.WebGLRenderer;
-      this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-      // Update deprecated shadow map properties
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      this.container.appendChild(this.renderer.domElement);
-      this.camera = new THREE.PerspectiveCamera(45, this.container.offsetWidth / this.container.offsetHeight, 1, 4000);
-      this.camera.position.set(7, 5, 7);
-      this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-      window.addEventListener('resize', function() {
-        return _this.onWindowResize();
-      });
-      this.start_stats();
-    }
-
-    Space.prototype.addToScene = function(o) {
-      return this.scene.add(o);
-    };
-
-    Space.prototype.addLight = function(x, y, z, color, intensity, castShadow) {
-      var d, light;
-      if (castShadow == null) {
-        castShadow = false;
-      }
-      light = new THREE.DirectionalLight(color, intensity);
-      light.position.set(x, y, z);
-      if (castShadow) {
-        light.castShadow = true;
-        // Update deprecated shadow camera properties
-        d = 10;
-        light.shadow.camera.near = 0.01;
-        light.shadow.camera.far = 100;
-        light.shadow.camera.left = -d;
-        light.shadow.camera.right = d;
-        light.shadow.camera.top = d;
-        light.shadow.camera.bottom = -d;
-        // Update deprecated shadow map properties
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
-        // shadowDarkness is removed in newer versions, use opacity in material instead
-      }
-      return this.addToScene(light);
-    };
-
-    Space.prototype.onWindowResize = function() {
-      var h, w;
-      if (this.isFullscreen) {
-        w = window.innerWidth;
-        h = window.innerHeight;
-      } else {
-        w = this.container.offsetWidth;
-        h = this.container.offsetHeight;
-      }
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
-      return this.renderer.setSize(w, h);
-    };
-
-    Space.prototype.start_stats = function() {
-      this.stats = new Stats;
-      this.stats.domElement.style.position = 'absolute';
-      this.stats.domElement.style.left = '0px';
-      this.stats.domElement.style.top = '0px';
-      return document.body.appendChild(this.stats.domElement);
-    };
-
-    Space.prototype.update = function(t_step, timestamp) {
-      var o, _i, _len, _ref, _results;
-      _ref = this.objects;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        o = _ref[_i];
-        _results.push(o.update(t_step, timestamp));
-      }
-      return _results;
-    };
-
-    Space.prototype.run = function(timestamp) {
-      var t_step,
-        _this = this;
-      if (!this.last_time) {
-        this.last_time = timestamp;
-      }
-      t_step = timestamp - this.last_time;
-      if (t_step > 0) {
-        this.update(t_step, timestamp);
-        this.render();
-        this.last_time = timestamp;
-        this.stats.update();
-      }
-      return requestAnimationFrame(function(par) {
-        return _this.run(par);
-      });
-    };
-
-    Space.prototype.addUpdatable = function(obj) {
-      this.scene.add(obj.object3D);
-      return this.objects.push(obj);
-    };
-
-    Space.prototype.render = function() {
-      return this.renderer.render(this.scene, this.camera);
-    };
-
-    return Space;
-
-  })();
-
-  Object3D = (function() {
-    function Object3D() {}
-
-    Object3D.prototype.setPosition = function(x, y, z) {
-      this.setPos = [x, y, z];
-      this.object3D.position.x = x;
-      this.object3D.position.y = y;
-      this.object3D.position.z = z;
-      return this;
-    };
-
-    return Object3D;
-
-  })();
-
-  normalDist = function() {
-    return (Math.random() + Math.random() + Math.random()) / 3;
+  Space.prototype.addToScene = function(o) {
+    return this.scene.add(o);
   };
 
-  Cube = (function(_super) {
-    extend(Cube, _super);
-
-    function Cube(space) {
-      var geometry, material;
-      this.space = space;
-      material = new THREE.MeshLambertMaterial({
-        color: 0x888888,
-        opacity: 0.5,
-        transparent: true
-      });
-      this.volume = normalDist() * (1 - 0.4) + 0.1;
-      this.dimX = normalDist() * (1 - 0.2) + 0.2;
-      this.dimZ = this.dimX;
-      this.dimY = this.volume / (this.dimX * this.dimZ);
-      // Replace deprecated CubeGeometry with BoxGeometry
-      geometry = new THREE.BoxGeometry(this.dimX, this.dimY, this.dimZ);
-      this.object3D = new THREE.Mesh(geometry, material);
+  Space.prototype.addLight = function(x, y, z, color, intensity, castShadow) {
+    var d, light;
+    if (castShadow == null) {
+      castShadow = false;
     }
-
-    Cube.prototype.setLLC = function(x, y, z) {
-      return this.setPosition(x + (this.dimX / 2), y + (this.dimY / 2), z + (this.dimZ / 2));
-    };
-
-    return Cube;
-
-  })(Object3D);
-
-  Maze = (function() {
-    function Maze(dimX, dimY) {
-      this.dimX = dimX;
-      this.dimY = dimY;
-      this.coordinates = this.genCoordinates();
+    light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(x, y, z);
+    if (castShadow) {
+      light.castShadow = true;
+      // Update deprecated shadow camera properties
+      d = 10;
+      light.shadow.camera.near = 0.01;
+      light.shadow.camera.far = 100;
+      light.shadow.camera.left = -d;
+      light.shadow.camera.right = d;
+      light.shadow.camera.top = d;
+      light.shadow.camera.bottom = -d;
+      // Update deprecated shadow map properties
+      light.shadow.mapSize.width = 2048;
+      light.shadow.mapSize.height = 2048;
+      // shadowDarkness is removed in newer versions, use opacity in material instead
     }
+    return this.addToScene(light);
+  };
 
-    Maze.prototype.genCoordinates = function() {
-      var i, j, res, _i, _j, _ref, _ref1;
-      res = [];
-      for (i = _i = 0, _ref = this.dimX; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        for (j = _j = 0, _ref1 = this.dimY; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
-          res.push([i, j]);
-        }
+  Space.prototype.onWindowResize = function() {
+    var h, w;
+    if (this.isFullscreen) {
+      w = window.innerWidth;
+      h = window.innerHeight;
+    } else {
+      w = this.container.offsetWidth;
+      h = this.container.offsetHeight;
+    }
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    return this.renderer.setSize(w, h);
+  };
+
+  Space.prototype.start_stats = function() {
+    this.stats = new Stats;
+    this.stats.domElement.style.position = 'absolute';
+    this.stats.domElement.style.left = '0px';
+    this.stats.domElement.style.top = '0px';
+    return document.body.appendChild(this.stats.domElement);
+  };
+
+  Space.prototype.update = function(t_step, timestamp) {
+    var o, _i, _len, _ref, _results;
+    _ref = this.objects;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      o = _ref[_i];
+      _results.push(o.update(t_step, timestamp));
+    }
+    return _results;
+  };
+
+  Space.prototype.run = function(timestamp) {
+    var t_step,
+      _this = this;
+    if (!this.last_time) {
+      this.last_time = timestamp;
+    }
+    t_step = timestamp - this.last_time;
+    if (t_step > 0) {
+      this.update(t_step, timestamp);
+      this.render();
+      this.last_time = timestamp;
+      this.stats.update();
+    }
+    return requestAnimationFrame(function(par) {
+      return _this.run(par);
+    });
+  };
+
+  Space.prototype.addUpdatable = function(obj) {
+    this.scene.add(obj.object3D);
+    return this.objects.push(obj);
+  };
+
+  Space.prototype.render = function() {
+    return this.renderer.render(this.scene, this.camera);
+  };
+
+  return Space;
+
+})();
+
+Object3D = (function() {
+  function Object3D() {}
+
+  Object3D.prototype.setPosition = function(x, y, z) {
+    this.setPos = [x, y, z];
+    this.object3D.position.x = x;
+    this.object3D.position.y = y;
+    this.object3D.position.z = z;
+    return this;
+  };
+
+  return Object3D;
+
+})();
+
+normalDist = function() {
+  return (Math.random() + Math.random() + Math.random()) / 3;
+};
+
+Cube = (function(_super) {
+  extend(Cube, _super);
+
+  function Cube(space) {
+    var geometry, material;
+    this.space = space;
+    material = new THREE.MeshLambertMaterial({
+      color: 0x888888,
+      opacity: 0.5,
+      transparent: true
+    });
+    this.volume = normalDist() * (1 - 0.4) + 0.1;
+    this.dimX = normalDist() * (1 - 0.2) + 0.2;
+    this.dimZ = this.dimX;
+    this.dimY = this.volume / (this.dimX * this.dimZ);
+    // Replace deprecated CubeGeometry with BoxGeometry
+    geometry = new THREE.BoxGeometry(this.dimX, this.dimY, this.dimZ);
+    this.object3D = new THREE.Mesh(geometry, material);
+  }
+
+  Cube.prototype.setLLC = function(x, y, z) {
+    return this.setPosition(x + (this.dimX / 2), y + (this.dimY / 2), z + (this.dimZ / 2));
+  };
+
+  return Cube;
+
+})(Object3D);
+
+Maze = (function() {
+  function Maze(dimX, dimY) {
+    this.dimX = dimX;
+    this.dimY = dimY;
+    this.coordinates = this.genCoordinates();
+  }
+
+  Maze.prototype.genCoordinates = function() {
+    var i, j, res, _i, _j, _ref, _ref1;
+    res = [];
+    for (i = _i = 0, _ref = this.dimX; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+      for (j = _j = 0, _ref1 = this.dimY; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
+        res.push([i, j]);
       }
-      return res;
-    };
+    }
+    return res;
+  };
 
-    Maze.prototype.fromGridCoords = function(i, j) {
-      return [i - (this.dimX / 2), 0, j - (this.dimY / 2)];
-    };
+  Maze.prototype.fromGridCoords = function(i, j) {
+    return [i - (this.dimX / 2), 0, j - (this.dimY / 2)];
+  };
 
-    Maze.prototype.toGridCoords = function(x, z) {
-      return [Math.floor(x + (this.dimX / 2)), Math.floor(z + (this.dimY / 2))];
-    };
+  Maze.prototype.toGridCoords = function(x, z) {
+    return [Math.floor(x + (this.dimX / 2)), Math.floor(z + (this.dimY / 2))];
+  };
 
-    Maze.prototype.trimPercent = function(percent) {
-      var i, j, p, _i, _len, _ref, _ref1, _results;
-      p = percent / 100;
-      _ref = this.coordinates;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-        if (Math.random() < p) {
-          if (this.mazeWalls[i][j]) {
-            _results.push(this.mazeWalls[i][j] = false);
-          } else {
-            _results.push(void 0);
-          }
+  Maze.prototype.trimPercent = function(percent) {
+    var i, j, p, _i, _len, _ref, _ref1, _results;
+    p = percent / 100;
+    _ref = this.coordinates;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+      if (Math.random() < p) {
+        if (this.mazeWalls[i][j]) {
+          _results.push(this.mazeWalls[i][j] = false);
         } else {
           _results.push(void 0);
         }
-      }
-      return _results;
-    };
-
-    Maze.prototype.inGrid = function(i, j) {
-      return !(i < 0 || j < 0 || i >= this.dimX || j >= this.dimY);
-    };
-
-    Maze.prototype.cross = function(x, y) {
-      var dx, dy, _i, _len, _ref, _ref1, _results;
-      _ref = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], dx = _ref1[0], dy = _ref1[1];
-        _results.push([x + dx, y + dy]);
-      }
-      return _results;
-    };
-
-    Maze.prototype.around = function(x, y) {
-      var dx, dy, ret, _i, _j, _len, _len1, _ref, _ref1;
-      ret = [];
-      _ref = [-1, 0, 1];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        dx = _ref[_i];
-        _ref1 = [-1, 0, 1];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          dy = _ref1[_j];
-          if (dy !== 0 && dx !== 0) {
-            ret.push([x + dx, y + dy]);
-          }
-        }
-      }
-      return ret;
-    };
-
-    Maze.prototype.neighbours = function(x, y) {
-      var i, j, _i, _len, _ref, _ref1, _results;
-      _ref = this.cross(x, y);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-        if (this.inGrid(i, j)) {
-          _results.push([i, j]);
-        }
-      }
-      return _results;
-    };
-
-    Maze.prototype.neighbourWalls = function(x, y) {
-      var i, j, _i, _len, _ref, _ref1, _results;
-      _ref = this.neighbours(x, y);
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-        if (this.mazeWalls[i][j]) {
-          _results.push([i, j]);
-        }
-      }
-      return _results;
-    };
-
-    Maze.prototype.breakWall = function(x, y) {
-      var i, j, wcount, _i, _len, _ref, _ref1;
-      wcount = 0;
-      _ref = this.cross(x, y);
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-        if (!this.inGrid(i, j)) {
-          wcount += 1;
-        } else {
-          if (this.mazeWalls[i][j]) {
-            wcount += 1;
-          }
-        }
-      }
-      return wcount > 2;
-    };
-
-    Maze.prototype.make = function() {
-      var i, ign, indx, isIn, j, startX, startY, w, wall, x, y, _i, _len, _ref, _ref1, _ref2;
-      this.mazeWalls = (function() {
-        var _i, _ref, _results;
-        _results = [];
-        for (ign = _i = 0, _ref = this.dimX; 0 <= _ref ? _i < _ref : _i > _ref; ign = 0 <= _ref ? ++_i : --_i) {
-          _results.push((function() {
-            var _j, _ref1, _results1;
-            _results1 = [];
-            for (ign = _j = 0, _ref1 = this.dimY; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; ign = 0 <= _ref1 ? ++_j : --_j) {
-              _results1.push(true);
-            }
-            return _results1;
-          }).call(this));
-        }
-        return _results;
-      }).call(this);
-      // Generate random integers between min and max (inclusive)
-      function getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-      }
-
-      startX = getRandomInt(0, this.dimX - 1);
-      startY = getRandomInt(0, this.dimY - 1);
-      this.mazeWalls[startX][startY] = false;
-      wall = this.neighbourWalls(startX, startY);
-      while (wall.length > 0) {
-        indx = Math.floor(Math.random() * wall.length);
-        _ref = wall[indx], x = _ref[0], y = _ref[1];
-        wall.splice(indx, 1);
-        if (!this.mazeWalls[x][y]) {
-          continue;
-        }
-        if (this.breakWall(x, y)) {
-          this.mazeWalls[x][y] = false;
-          _ref1 = this.neighbourWalls(x, y);
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            _ref2 = _ref1[_i], i = _ref2[0], j = _ref2[1];
-            isIn = (function() {
-              var _j, _len1, _results;
-              _results = [];
-              for (_j = 0, _len1 = wall.length; _j < _len1; _j++) {
-                w = wall[_j];
-                if (w[0] === i && w[1] === j) {
-                  _results.push(w);
-                }
-              }
-              return _results;
-            })();
-            if (isIn.length === 0) {
-              wall.push([i, j]);
-            }
-          }
-        }
-      }
-      return this.mazeWalls;
-    };
-
-    Maze.prototype.randomEmptyCell = function() {
-      var i, j, res, _i, _len, _ref, _ref1;
-      res = [];
-      _ref = this.coordinates;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-        if (!this.mazeWalls[i][j]) {
-          res.push([i, j]);
-        }
-      }
-      return res[Math.floor(Math.random() * res.length)];
-    };
-
-    return Maze;
-
-  })();
-
-  // Using printout from utils.js if needed
-
-  Scout = (function(_super) {
-    extend(Scout, _super);
-
-    function Scout(space, maze) {
-      var color, i, j, light, lp, sphere, sx, sy, sz, _ref, _ref1;
-      this.space = space;
-      this.maze = maze;
-      this.dimX = 0.5;
-      this.dimY = 0.5;
-      this.dimZ = 0.5;
-      color = 0x0099FF;
-      sphere = new THREE.SphereGeometry(0.05);
-      lp = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
-        color: color
-      }));
-      // Create the point light
-      light = new THREE.PointLight(color, 1.0, 4);
-      // Add the mesh as a child of the light so they move together
-      light.add(lp);
-      // Add the light to the scene (not the mesh directly)
-      this.space.addToScene(light);
-      this.object3D = light;
-      _ref = this.maze.randomEmptyCell(), i = _ref[0], j = _ref[1];
-      _ref1 = maze.fromGridCoords(i, j), sx = _ref1[0], sy = _ref1[1], sz = _ref1[2];
-      this.setLLC(sx, sy, sz);
-    }
-
-    Scout.prototype.setLLC = function(x, y, z) {
-      return this.setPosition(x + (this.dimX / 2), y + (this.dimY / 2) + 0, z + (this.dimZ / 2));
-    };
-
-    Scout.prototype.update = function(t_step, timestamp) {
-      var sin_speed;
-      sin_speed = timestamp / 1000 / 3;
-
-      // Simple movement pattern
-      this.object3D.position.x = Math.sin(sin_speed + Math.PI / 2) * 4;
-      this.object3D.position.z = Math.sin(sin_speed) * 4;
-
-      // Make camera follow the scout
-      return this.space.camera.lookAt(this.object3D.position);
-    };
-
-    return Scout;
-
-  })(Object3D);
-
-  run_scout = function(container) {
-    var c, i, j, maze, plane, s, scout, sizeX, sizeZ, x, y, z, _i, _len, _ref, _ref1, _ref2;
-    sizeX = 15;
-    sizeZ = 15;
-    s = new Space(container);
-    s.addToScene(new THREE.AmbientLight(0x101010));
-    s.addLight(3, 10, 2, 0x505050, 0.3);
-    plane = new THREE.Mesh(new THREE.PlaneGeometry(sizeX, sizeZ, 50, 50), new THREE.MeshLambertMaterial({
-      color: 0x404040
-    }));
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = 0;
-    s.addToScene(plane);
-    maze = new Maze(sizeX, sizeZ);
-    maze.make();
-    maze.trimPercent(0);
-    _ref = maze.coordinates;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
-      if (maze.mazeWalls[i][j]) {
-        _ref2 = maze.fromGridCoords(i, j), x = _ref2[0], y = _ref2[1], z = _ref2[2];
-        c = new Cube(s).setLLC(x, y, z);
-        s.addToScene(c.object3D);
-        maze.mazeWalls[i][j] = c;
+      } else {
+        _results.push(void 0);
       }
     }
-    scout = new Scout(s, maze);
-    s.addUpdatable(scout);
-    return s.run(window.performance.now());
+    return _results;
   };
 
-  window.LL = window.LL || {};
+  Maze.prototype.inGrid = function(i, j) {
+    return !(i < 0 || j < 0 || i >= this.dimX || j >= this.dimY);
+  };
 
-  window.LL.run_scout = run_scout;
+  Maze.prototype.cross = function(x, y) {
+    var dx, dy, _i, _len, _ref, _ref1, _results;
+    _ref = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], dx = _ref1[0], dy = _ref1[1];
+      _results.push([x + dx, y + dy]);
+    }
+    return _results;
+  };
 
-}).call(this);
+  Maze.prototype.around = function(x, y) {
+    var dx, dy, ret, _i, _j, _len, _len1, _ref, _ref1;
+    ret = [];
+    _ref = [-1, 0, 1];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      dx = _ref[_i];
+      _ref1 = [-1, 0, 1];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        dy = _ref1[_j];
+        if (dy !== 0 && dx !== 0) {
+          ret.push([x + dx, y + dy]);
+        }
+      }
+    }
+    return ret;
+  };
+
+  Maze.prototype.neighbours = function(x, y) {
+    var i, j, _i, _len, _ref, _ref1, _results;
+    _ref = this.cross(x, y);
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+      if (this.inGrid(i, j)) {
+        _results.push([i, j]);
+      }
+    }
+    return _results;
+  };
+
+  Maze.prototype.neighbourWalls = function(x, y) {
+    var i, j, _i, _len, _ref, _ref1, _results;
+    _ref = this.neighbours(x, y);
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+      if (this.mazeWalls[i][j]) {
+        _results.push([i, j]);
+      }
+    }
+    return _results;
+  };
+
+  Maze.prototype.breakWall = function(x, y) {
+    var i, j, wcount, _i, _len, _ref, _ref1;
+    wcount = 0;
+    _ref = this.cross(x, y);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+      if (!this.inGrid(i, j)) {
+        wcount += 1;
+      } else {
+        if (this.mazeWalls[i][j]) {
+          wcount += 1;
+        }
+      }
+    }
+    return wcount > 2;
+  };
+
+  Maze.prototype.make = function() {
+    var i, ign, indx, isIn, j, startX, startY, w, wall, x, y, _i, _len, _ref, _ref1, _ref2;
+    this.mazeWalls = (function() {
+      var _i, _ref, _results;
+      _results = [];
+      for (ign = _i = 0, _ref = this.dimX; 0 <= _ref ? _i < _ref : _i > _ref; ign = 0 <= _ref ? ++_i : --_i) {
+        _results.push((function() {
+          var _j, _ref1, _results1;
+          _results1 = [];
+          for (ign = _j = 0, _ref1 = this.dimY; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; ign = 0 <= _ref1 ? ++_j : --_j) {
+            _results1.push(true);
+          }
+          return _results1;
+        }).call(this));
+      }
+      return _results;
+    }).call(this);
+    // Generate random integers between min and max (inclusive)
+    function getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    startX = getRandomInt(0, this.dimX - 1);
+    startY = getRandomInt(0, this.dimY - 1);
+    this.mazeWalls[startX][startY] = false;
+    wall = this.neighbourWalls(startX, startY);
+    while (wall.length > 0) {
+      indx = Math.floor(Math.random() * wall.length);
+      _ref = wall[indx], x = _ref[0], y = _ref[1];
+      wall.splice(indx, 1);
+      if (!this.mazeWalls[x][y]) {
+        continue;
+      }
+      if (this.breakWall(x, y)) {
+        this.mazeWalls[x][y] = false;
+        _ref1 = this.neighbourWalls(x, y);
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          _ref2 = _ref1[_i], i = _ref2[0], j = _ref2[1];
+          isIn = (function() {
+            var _j, _len1, _results;
+            _results = [];
+            for (_j = 0, _len1 = wall.length; _j < _len1; _j++) {
+              w = wall[_j];
+              if (w[0] === i && w[1] === j) {
+                _results.push(w);
+              }
+            }
+            return _results;
+          })();
+          if (isIn.length === 0) {
+            wall.push([i, j]);
+          }
+        }
+      }
+    }
+    return this.mazeWalls;
+  };
+
+  Maze.prototype.randomEmptyCell = function() {
+    var i, j, res, _i, _len, _ref, _ref1;
+    res = [];
+    _ref = this.coordinates;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+      if (!this.mazeWalls[i][j]) {
+        res.push([i, j]);
+      }
+    }
+    return res[Math.floor(Math.random() * res.length)];
+  };
+
+  return Maze;
+
+})();
+
+// Using printout from utils.js if needed
+
+Scout = (function(_super) {
+  extend(Scout, _super);
+
+  function Scout(space, maze) {
+    var color, i, j, light, lp, sphere, sx, sy, sz, _ref, _ref1;
+    this.space = space;
+    this.maze = maze;
+    this.dimX = 0.5;
+    this.dimY = 0.5;
+    this.dimZ = 0.5;
+    color = 0x0099FF;
+    sphere = new THREE.SphereGeometry(0.05);
+    lp = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({
+      color: color
+    }));
+    // Create the point light
+    light = new THREE.PointLight(color, 1.0, 4);
+    // Add the mesh as a child of the light so they move together
+    light.add(lp);
+    // Add the light to the scene (not the mesh directly)
+    this.space.addToScene(light);
+    this.object3D = light;
+    _ref = this.maze.randomEmptyCell(), i = _ref[0], j = _ref[1];
+    _ref1 = maze.fromGridCoords(i, j), sx = _ref1[0], sy = _ref1[1], sz = _ref1[2];
+    this.setLLC(sx, sy, sz);
+  }
+
+  Scout.prototype.setLLC = function(x, y, z) {
+    return this.setPosition(x + (this.dimX / 2), y + (this.dimY / 2) + 0, z + (this.dimZ / 2));
+  };
+
+  Scout.prototype.update = function(t_step, timestamp) {
+    var sin_speed;
+    sin_speed = timestamp / 1000 / 3;
+
+    // Simple movement pattern
+    this.object3D.position.x = Math.sin(sin_speed + Math.PI / 2) * 4;
+    this.object3D.position.z = Math.sin(sin_speed) * 4;
+
+    // Make camera follow the scout
+    return this.space.camera.lookAt(this.object3D.position);
+  };
+
+  return Scout;
+
+})(Object3D);
+
+run_scout = function(container) {
+  var c, i, j, maze, plane, s, scout, sizeX, sizeZ, x, y, z, _i, _len, _ref, _ref1, _ref2;
+  sizeX = 15;
+  sizeZ = 15;
+  s = new Space(container);
+  s.addToScene(new THREE.AmbientLight(0x101010));
+  s.addLight(3, 10, 2, 0x505050, 0.3);
+  plane = new THREE.Mesh(new THREE.PlaneGeometry(sizeX, sizeZ, 50, 50), new THREE.MeshLambertMaterial({
+    color: 0x404040
+  }));
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.y = 0;
+  s.addToScene(plane);
+  maze = new Maze(sizeX, sizeZ);
+  maze.make();
+  maze.trimPercent(0);
+  _ref = maze.coordinates;
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    _ref1 = _ref[_i], i = _ref1[0], j = _ref1[1];
+    if (maze.mazeWalls[i][j]) {
+      _ref2 = maze.fromGridCoords(i, j), x = _ref2[0], y = _ref2[1], z = _ref2[2];
+      c = new Cube(s).setLLC(x, y, z);
+      s.addToScene(c.object3D);
+      maze.mazeWalls[i][j] = c;
+    }
+  }
+  scout = new Scout(s, maze);
+  s.addUpdatable(scout);
+  return s.run(window.performance.now());
+};
+
+// Export the run_scout function to the global LL namespace
+window.LL.run_scout = run_scout;

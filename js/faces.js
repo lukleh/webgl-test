@@ -40,22 +40,11 @@
     }
 
     /**
-     * Get the appropriate getUserMedia method for the current browser
-     * @returns {Function|null} The getUserMedia function or null if not supported
-     */
-    getUserMedia() {
-      return navigator.getUserMedia ||
-             navigator.webkitGetUserMedia ||
-             navigator.mozGetUserMedia ||
-             navigator.msGetUserMedia;
-    }
-
-    /**
-     * Check if getUserMedia is supported
+     * Check if getUserMedia is supported using modern MediaDevices API
      * @returns {boolean} True if getUserMedia is supported
      */
     hasGetUserMedia() {
-      return !!this.getUserMedia();
+      return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     }
 
     /**
@@ -86,18 +75,18 @@
     }
 
     /**
-     * Start video capture using the appropriate getUserMedia method
+     * Start video capture using the modern MediaDevices API
      * @param {Object} params - Parameters for getUserMedia
      * @param {Function} callback - Success callback
      * @param {Function} errorCallback - Error callback
      */
     startVideo(params, callback, errorCallback) {
-      if (navigator.webkitGetUserMedia) {
-        navigator.webkitGetUserMedia(params, callback, errorCallback);
-      } else if (navigator.mozGetUserMedia) {
-        navigator.mozGetUserMedia(params, callback, errorCallback);
-      } else if (navigator.getUserMedia) {
-        navigator.getUserMedia(params, callback, errorCallback);
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia(params)
+          .then(callback)
+          .catch(errorCallback);
+      } else {
+        errorCallback(new Error('getUserMedia is not supported in this browser'));
       }
     }
 

@@ -68,7 +68,6 @@
   function printout(o) {
     console.log(JSON.stringify(o));
   }
-
   // Add to global namespace
   window.LL = window.LL || {};
   window.LL.utils = {
@@ -77,3 +76,4 @@
     printout: printout
   };
 })();
+

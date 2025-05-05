@@ -83,9 +83,9 @@
   function webglCapable() {
     return detectWebGL().supported;
   }
-
   // Add to global namespace
   window.LL = window.LL || {};
   window.LL.webglCapable = webglCapable;
   window.LL.detectWebGL = detectWebGL;
 })();
+

@@ -5,6 +5,10 @@ cleanly in a current browser/tooling setup.
 
 Live listing: https://lukleh.github.io/webgl-test/
 
+## Screenshot
+
+![Cubes demo screenshot](screenshot-cubes.png)
+
 ## Demos
 
 - `cubes.html`: floating textured cubes in a simple scene

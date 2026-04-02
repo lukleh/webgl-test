@@ -35,8 +35,8 @@ Space = (function() {
       antialias: true,
       preserveDrawingBuffer: true 
     });
-    // Configure renderer for proper color space and gamma
-    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    // Configure renderer with the current Three.js color-space API.
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
     this.container.appendChild(this.renderer.domElement);
@@ -126,7 +126,7 @@ Object3Dcamera = (function() {
     // Use modern texture settings (THREE.RGBFormat is deprecated)
     this.videoTexture.minFilter = THREE.LinearFilter;
     this.videoTexture.magFilter = THREE.LinearFilter;
-    this.videoTexture.encoding = THREE.sRGBEncoding;
+    this.videoTexture.colorSpace = THREE.SRGBColorSpace;
     
     // Use MeshBasicMaterial for video to avoid lighting issues
     this.material = new THREE.MeshBasicMaterial({

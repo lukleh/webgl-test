@@ -1,0 +1,12 @@
+{
+  "name": "webgl-test",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  }
+}

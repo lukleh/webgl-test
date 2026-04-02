@@ -11,7 +11,7 @@
   function runDemo(fn) {
     // Set up fullscreen toggle
     document.querySelector("#hud p").addEventListener('click', function(evt) {
-      if (screenfull && screenfull.isEnabled) {
+      if (typeof screenfull !== 'undefined' && screenfull.isEnabled) {
         try {
           // Get the container element to make fullscreen
           const container = document.getElementById("container");
